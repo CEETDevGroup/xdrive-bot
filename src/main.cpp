@@ -138,7 +138,9 @@ void autonomous() {
   ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
 }
 
+void move_forward() {
 
+}
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -153,6 +155,7 @@ void autonomous() {
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
+
 void opcontrol() {
   // This is preference to what you like to drive on.
   chassis.set_drive_brake(MOTOR_BRAKE_COAST);
@@ -160,9 +163,10 @@ void opcontrol() {
   pros::Motor mtr_2 = chassis.left_motors[1];
   pros::Motor mtr_3 = chassis.right_motors[0];
   pros::Motor mtr_4 = chassis.right_motors[1];
-
   pros::Motor armlad(11);
-  PID armladPID{1, 0.003, 4, 100, "Armlad"};
+  armlad.set_gearing(MOTOR_GEARSET_36);
+
+  // PID armladPID{1, 0.003, 4, 100, "Armlad"};
   armlad.set_brake_mode(MOTOR_BRAKE_HOLD);
 
   while (true) {
@@ -229,14 +233,24 @@ void opcontrol() {
       mtr_4.move(0);
 		}
 
-    if (master.get_digital(DIGITAL_L1)) {
-      armladPID.set_target(-200);
+    if (master.get_digital(DIGITAL_L2)) {
+      // Move the expulsion mechanism forward
+      armlad.move(95);
     }
-    else if (master.get_digital(DIGITAL_L2)) {
-      armladPID.set_target(0);
+    else if (master.get_digital(DIGITAL_L1)) {
+      // Move it backward
+      armlad.move(-95);
+
+
+    } else {
+      armlad.move(0);
+    } 
+
+    if (master.get_digital(DIGITAL_A)) {
+      chassis.set_drive_pid(10, 100);
     }
 
-    armlad.move(armladPID.compute(armlad.get_position()));
+    // armlad.move(armladPID.compute(armlad.get_position()));
     
     pros::delay(ez::util::DELAY_TIME); // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
   }
