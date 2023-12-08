@@ -138,9 +138,14 @@ void autonomous() {
   ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
 }
 
-void move_forward() {
-
-}
+// void start_arm() {
+//   // continuously run the arm, forever
+//   while (true) {
+//     // move the arm
+//     armlad.move(127);
+//     pros::delay(20);
+//   }
+// }
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -164,6 +169,7 @@ void opcontrol() {
   pros::Motor mtr_3 = chassis.right_motors[0];
   pros::Motor mtr_4 = chassis.right_motors[1];
   pros::Motor armlad(11);
+  armlad.set_brake_mode(MOTOR_BRAKE_HOLD);
   armlad.set_gearing(MOTOR_GEARSET_36);
 
   // PID armladPID{1, 0.003, 4, 100, "Armlad"};
@@ -235,11 +241,11 @@ void opcontrol() {
 
     if (master.get_digital(DIGITAL_L2)) {
       // Move the expulsion mechanism forward
-      armlad.move(95);
-    }
-    else if (master.get_digital(DIGITAL_L1)) {
-      // Move it backward
-      armlad.move(-95);
+      armlad.move(127);
+    // }
+    // else if (master.get_digital(DIGITAL_L1)) {
+    //   // Move it backward
+    //   armlad.move(-127);
 
 
     } else {
@@ -247,7 +253,8 @@ void opcontrol() {
     } 
 
     if (master.get_digital(DIGITAL_A)) {
-      chassis.set_drive_pid(10, 100);
+      cout << "A pressed" << endl;
+      chassis.set_drive_pid(15, 100);
     }
 
     // armlad.move(armladPID.compute(armlad.get_position()));
