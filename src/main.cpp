@@ -6,6 +6,8 @@
 // https://ez-robotics.github.io/EZ-Template/
 /////
 
+void drive(int distance);
+void turn(int degrees);
 
 // Chassis constructor
 Drive chassis (
@@ -18,7 +20,7 @@ Drive chassis (
   ,{-4, -5}
 
   // IMU Port
-  ,7
+  ,11
 
   // Wheel Diameter (Remember, 4" wheels are actually 4.125!)
   //    (or tracking wheel diameter)
@@ -135,17 +137,13 @@ void autonomous() {
   chassis.reset_drive_sensor(); // Reset drive sensors to 0
   chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // Set motors to hold.  This helps autonomous consistency.
 
-  ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
-}
+  // ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
 
-// void start_arm() {
-//   // continuously run the arm, forever
-//   while (true) {
-//     // move the arm
-//     armlad.move(127);
-//     pros::delay(20);
-//   }
-// }
+  drive(15);
+  while (true) {
+    turn(90);
+  }
+}
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -161,6 +159,25 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 
+pros::Motor wing(7);
+
+void turn(int degrees) {
+  chassis.set_turn_pid(degrees, 100);
+}
+
+void drive(int distance) {
+  chassis.set_drive_pid(distance, 100);
+}
+
+void toggle_wing(bool extended) {
+  if (extended) {
+    wing.move_absolute(680, 200);
+  }
+  else {
+    wing.move_absolute(0, 200);
+  }
+}
+
 void opcontrol() {
   // This is preference to what you like to drive on.
   chassis.set_drive_brake(MOTOR_BRAKE_COAST);
@@ -168,99 +185,82 @@ void opcontrol() {
   pros::Motor mtr_2 = chassis.left_motors[1];
   pros::Motor mtr_3 = chassis.right_motors[0];
   pros::Motor mtr_4 = chassis.right_motors[1];
-  pros::Motor armlad(11);
-  armlad.set_brake_mode(MOTOR_BRAKE_HOLD);
-  armlad.set_gearing(MOTOR_GEARSET_36);
 
-  // PID armladPID{1, 0.003, 4, 100, "Armlad"};
-  armlad.set_brake_mode(MOTOR_BRAKE_HOLD);
+  bool wing_extended = false;
 
   while (true) {
-    chassis.arcade_standard(ez::SINGLE);
+		int mtr_1_power = 0;
+		int mtr_2_power = 0;
+		int mtr_3_power = 0;
+		int mtr_4_power = 0;
 
-		// int mtr_1_power = 0;
-		// int mtr_2_power = 0;
-		// int mtr_3_power = 0;
-		// int mtr_4_power = 0;
+		int left_y = master.get_analog(ANALOG_LEFT_Y);
+		int left_x = master.get_analog(ANALOG_LEFT_X);
+		int right_x = master.get_analog(ANALOG_RIGHT_X);
 
-		// int left_y = master.get_analog(ANALOG_LEFT_Y);
-		// int left_x = master.get_analog(ANALOG_LEFT_X);
-		// int right_x = master.get_analog(ANALOG_RIGHT_X);
+		bool left_deadzone = (left_y < 10 && left_y > -10) && (left_x < 10 && left_x > -10);
+		bool right_deadzone = (right_x < 10 && right_x > -10);
 
-		// bool left_deadzone = (left_y < 10 && left_y > -10) && (left_x < 10 && left_x > -10);
-		// bool right_deadzone = (right_x < 10 && right_x > -10);
-
-		// // motor 1 is the top left
-		// // motor 2 is the bottom left
-		// // motor 3 is the top right
-		// // motor 4 is the bottom right
-		// // The motors are mounted in a way that the left motors are inverted
-		// // and the right motors are not inverted
-		// // The robot is an x-chassis, so we want to be able to go
-		// // left, right, forward, and backward
+		// motor 1 is the top left
+		// motor 2 is the bottom left
+		// motor 3 is the top right
+		// motor 4 is the bottom right
+		// The motors are mounted in a way that the left motors are inverted
+		// and the right motors are not inverted
+		// The robot is an x-chassis, so we want to be able to go
+		// left, right, forward, and backward
        
-	  //   // turn the bot
-		// if (right_x > 10 || right_x < -10) {
-		// 	mtr_1_power += right_x;
-		// 	mtr_2_power += right_x;
-		// 	mtr_3_power += -right_x;
-		// 	mtr_4_power += -right_x;
-		// }
+	    // turn the bot
+		if (right_x > 10 || right_x < -10) {
+			mtr_1_power += right_x;
+			mtr_2_power += right_x;
+			mtr_3_power += -right_x;
+			mtr_4_power += -right_x;
+		}
 		
-		// // move the bot forward and backward
-		// if (left_y > 10 || left_y < -10) {
-		// 	mtr_1_power += left_y;
-		// 	mtr_2_power += left_y;
-		// 	mtr_3_power += left_y;
-		// 	mtr_4_power += left_y;
-		// }
+		// move the bot forward and backward
+		if (left_y > 10 || left_y < -10) {
+			mtr_1_power += left_y;
+			mtr_2_power += left_y;
+			mtr_3_power += left_y;
+			mtr_4_power += left_y;
+		}
 
-		// // move the bot left and right
-		// if (left_x > 10 || left_x < -10) {
-		// 	mtr_1_power += left_x;
-		// 	mtr_2_power += -left_x;
-		// 	mtr_3_power += -left_x;
-		// 	mtr_4_power += left_x;
-		// }
+		// move the bot left and right
+		if (left_x > 10 || left_x < -10) {
+			mtr_1_power += left_x;
+			mtr_2_power += -left_x;
+			mtr_3_power += -left_x;
+			mtr_4_power += left_x;
+		}
 
-		// // set the motor powers
+		// set the motor powers
 
-		// if (!left_deadzone || !right_deadzone) {
-		// 	mtr_1.move(mtr_1_power);
-		// 	mtr_2.move(mtr_2_power);
-		// 	mtr_3.move(mtr_3_power);
-		// 	mtr_4.move(mtr_4_power);
-		// }
+		if (!left_deadzone || !right_deadzone) {
+			mtr_1.move(mtr_1_power);
+			mtr_2.move(mtr_2_power);
+			mtr_3.move(mtr_3_power);
+			mtr_4.move(mtr_4_power);
+		}
 
-		// else {
-		// 	// stop the motors
-    //   chassis.set_drive_brake(MOTOR_BRAKE_HOLD);
-    //   mtr_1.move(0);
-    //   mtr_2.move(0);
-    //   mtr_3.move(0);
-    //   mtr_4.move(0);
-		// }
+		else {
+			// stop the motors
+      chassis.set_drive_brake(MOTOR_BRAKE_HOLD);
+      mtr_1.move(0);
+      mtr_2.move(0);
+      mtr_3.move(0);
+      mtr_4.move(0);
+		}
 
-    // if (master.get_digital(DIGITAL_L2)) {
-    //   // Move the expulsion mechanism forward
-    //   armlad.move(127);
-    // // }
-    // // else if (master.get_digital(DIGITAL_L1)) {
-    // //   // Move it backward
-    // //   armlad.move(-127);
+    if (master.get_digital(DIGITAL_L2)) {
+      toggle_wing(true);
+    } 
+    else if (master.get_digital(DIGITAL_L1)) {
+      toggle_wing(false);
+    }
 
-
-    // } else {
-    //   armlad.move(0);
-    // } 
-
-    // if (master.get_digital(DIGITAL_A)) {
-    //   cout << "A pressed" << endl;
-    //   chassis.set_drive_pid(15, 100);
-    // }
-
-    // // armlad.move(armladPID.compute(armlad.get_position()));
+    // armlad.move(armladPID.compute(armlad.get_position()));
     
-    // pros::delay(ez::util::DELAY_TIME); // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
+    pros::delay(ez::util::DELAY_TIME); // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
   }
 }
