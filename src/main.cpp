@@ -8,6 +8,7 @@
 
 void drive(int distance);
 void turn(int degrees);
+void toggle_wing(bool extended);
 
 // Chassis constructor
 Drive chassis (
@@ -53,6 +54,14 @@ Drive chassis (
 );
 
 
+
+pros::Motor wing(7);
+pros::Motor left_1 = chassis.left_motors[0];
+pros::Motor left_2 = chassis.left_motors[1];
+pros::Motor right_1 = chassis.right_motors[0];
+pros::Motor right_2 = chassis.right_motors[1];
+
+
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -67,7 +76,7 @@ void initialize() {
 
   // Configure your chassis controls
   chassis.toggle_modify_curve_with_controller(true); // Enables modifying the controller curve with buttons on the joysticks
-  chassis.set_active_brake(0.3); // Sets the active brake kP. We recommend 0.1.
+  chassis.set_active_brake(0.1); // Sets the active brake kP. We recommend 0.1.
   chassis.set_curve_default(0, 0); // Defaults for curve. If using tank, only the first parameter is used. (Comment this line out if you have an SD card!)  
   default_constants(); // Set the drive to your own constants from autons.cpp!
   exit_condition_defaults(); // Set the exit conditions to your own constants from autons.cpp!
@@ -139,10 +148,7 @@ void autonomous() {
 
   // ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
 
-  drive(15);
-  while (true) {
-    turn(90);
-  }
+  grab_right_ball(wing);
 }
 
 /**
@@ -158,8 +164,6 @@ void autonomous() {
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
-
-pros::Motor wing(7);
 
 void turn(int degrees) {
   chassis.set_turn_pid(degrees, 100);
@@ -181,10 +185,7 @@ void toggle_wing(bool extended) {
 void opcontrol() {
   // This is preference to what you like to drive on.
   chassis.set_drive_brake(MOTOR_BRAKE_COAST);
-  pros::Motor mtr_1 = chassis.left_motors[0];
-  pros::Motor mtr_2 = chassis.left_motors[1];
-  pros::Motor mtr_3 = chassis.right_motors[0];
-  pros::Motor mtr_4 = chassis.right_motors[1];
+  wing.set_brake_mode(MOTOR_BRAKE_HOLD);
 
   bool wing_extended = false;
 
@@ -237,19 +238,19 @@ void opcontrol() {
 		// set the motor powers
 
 		if (!left_deadzone || !right_deadzone) {
-			mtr_1.move(mtr_1_power);
-			mtr_2.move(mtr_2_power);
-			mtr_3.move(mtr_3_power);
-			mtr_4.move(mtr_4_power);
+			left_1.move(mtr_1_power);
+			left_2.move(mtr_2_power);
+			right_1.move(mtr_3_power);
+			right_2.move(mtr_4_power);
 		}
 
 		else {
 			// stop the motors
       chassis.set_drive_brake(MOTOR_BRAKE_HOLD);
-      mtr_1.move(0);
-      mtr_2.move(0);
-      mtr_3.move(0);
-      mtr_4.move(0);
+      left_1.move(0);
+      left_2.move(0);
+      right_1.move(0);
+      right_2.move(0);
 		}
 
     if (master.get_digital(DIGITAL_L2)) {

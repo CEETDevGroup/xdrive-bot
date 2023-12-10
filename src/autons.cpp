@@ -65,7 +65,28 @@ void modified_exit_condition() {
   chassis.set_exit_condition(chassis.drive_exit, 80, 50, 300, 150, 500, 500);
 }
 
+void grab_right_ball(pros::Motor wing) {
+  chassis.set_turn_pid(90, 100);
+  chassis.wait_drive();
 
+  wing.move_absolute(680, 200);
+  pros::delay(250);
+
+  chassis.set_drive_pid(24, 100);
+  chassis.wait_drive();
+
+  chassis.set_turn_pid(-90, 100);
+  chassis.wait_drive();
+
+  wing.move_absolute(0, 100);
+  pros::delay(250);
+
+  chassis.set_turn_pid(-90, 100);
+  chassis.wait_drive();
+
+  chassis.set_drive_pid(24, 100);
+  chassis.wait_drive();
+}
 
 ///
 // Drive Example
